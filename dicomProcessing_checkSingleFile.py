@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+from dicomProcessing_helpingFunctions import *
+
 path = 'D:/CT-Dataset/all/Mozog_ID500_MozogAGCT_Anonymized_1.3.6.1.4.1.20468.2.152.0.1.89917.664402'
 file = path + '/' + str(np.random.choice(os.listdir(path)))
 
