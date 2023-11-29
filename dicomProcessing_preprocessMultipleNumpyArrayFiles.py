@@ -39,13 +39,11 @@ for directory in os.listdir(path):
             for scan_raw in uniformed:
                 scan = scan_raw
                 scan = thresholding(scan, show_diff=False)
-                scan = median_filter(scan, mat=(3, 3), show_diff=False)
-                scan = adjust_contrast(scan, show_diff=False)
-
-                # scan = clear_data(scan_raw, dil_mat=(3, 3), show_diff=False)
-                # scan = resize_scan(scan, 256, 256, show_diff=False)
-                # scan = filter_data(scan, show_dif=False)
-                # scan = resize_scan(scan, 128, 128, show_diff=False)
+                scan = mean_filter(scan, mat=(3, 3), show_diff=False)
+                scan = adjust_contrast(scan, low=0.15, high=0.65, show_diff=False)
+                scan = clear_data(scan, dil_mat=(3, 3), show_diff=False)
+                scan = move_to_center(scan, out_height=256, out_width=256, show_diff=False)
+                scan = resize_scan(scan, out_width=256, out_height=256, show_diff=False)
                 
                 ct_scan.append(scan.tolist())
 

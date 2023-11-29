@@ -5,13 +5,8 @@ import scipy as sp
 import skimage
 import cv2
 
-import matplotlib.pyplot as plt
-import matplotlib
-
-matplotlib.use('TkAgg')
-
 from typing import Any
-
+from dicomProcessing_plotScans import *
 
 def allowed_types():
     """
@@ -52,14 +47,16 @@ def transform_to_hu(dicom_data: pdcm.dataset.FileDataset,
     return dicom_data.pixel_array * slope + intercept
 
 
-def filter_data(data, show_dif=False):
+def filter_data(data, show_diff=False):
     """
     Function sets every pixel value beyond given threshold to 0 (default backgrond value)
     Thresholds are listed below in the table
     Afterwards using erosion and dilation redundant parts are removed (such as ears e.g.)
 
     Table values are based on data normalization
+
     |----------------------|-----------------------|
+
     | Bone     80  (Max)   | Brain   +-50          |
     | Vacuum   0   (Min)   |                       |
     | Water    18          |                       |
@@ -89,7 +86,7 @@ def filter_data(data, show_dif=False):
 
     res = mask * data
 
-    if show_dif:
+    if show_diff:
         fig, ax = plt.subplots(1, 2, figsize=[8, 8])
         ax[0].set_title('Original scan')
         ax[0].imshow(org_scan, aspect='auto', cmap=plt.cm.bone)
@@ -103,125 +100,85 @@ def filter_data(data, show_dif=False):
 
 def thresholding(data: Any,
                  show_diff: bool = False,
-                 save: bool = False):
+                 ):
     """
     Function does thresholding of the CT image to remove very bright pixels;
     pixels > 100 (bone) to 100 and all
     pixels < 0 (background) to value 0
     (original scan max value is approx. 1000 and min value -1000)
 
-    Afterwards all pixels are divided by 100 - this can be considered as a data normalization
+    Afterward all pixels are divided by 100 - this can be considered as a data normalization
     
     :param data: CT scan data array in HU
     :param show_diff: True/False (debug parameter) - if true result is shown
-    :param save: True/False - if true result scan is saved 
     :return: threshold data in range (0-1)
     """
-    org_scan = data.copy()
+    org_data = data.copy()
 
     # Set pixel values range from 0 to 100
     data[data > 100] = 100
     data[data < 0] = 0
 
     data = data / 100
-
-    if save:
-        fig = plt.figure()
-
-        plt.imshow(data, aspect='auto', cmap=plt.cm.bone)
-        plt.title('threshold scan')
-
-        # plt.show(block=True)
-        i = 1
-        while os.path.exists("threshold_%d.png" % i):
-            i += 1
-        plt.savefig(f'./images/thresholding/threshold_{i}.png')
+    # data[data == 1] = 0
 
     if show_diff:
-        fig, ax = plt.subplots(1, 2, figsize=[8, 8])
-        ax[0].set_title('Before threshold scan')
-        ax[0].imshow(org_scan, aspect='auto', cmap=plt.cm.bone)
+        plot_difference(org_data, data, func_title="threshold")
 
-        ax[1].set_title('After threshold scan')
-        ax[1].imshow(data, aspect='auto', cmap=plt.cm.bone)
-
-        plt.show(block=True)
     return data
 
 
-def median_filter(data: Any,
-                  mat: tuple = (5, 5),
-                  show_diff: bool = False,
-                  save: bool = False):
+def mean_filter(data: Any,
+                mat: tuple = (5, 5),
+                show_diff: bool = False,
+                ):
     """
-    Function uses median filter to remove noise from an image (CT scan array)
-    The median filter replaces each pixel's value with the median value of the neighboring pixels.
-    It's effective in removing salt-and-pepper noise (randomly occurring bright or dark pixels)
-    which occurs in electronic detectors.
+    Function uses average filter to remove noise from an image (CT scan array)
+    The average filter replaces each pixel's value with the average value of the neighboring pixels.
+    It's effective in removing salt-and-pepper noise which occurs in electronic detectors.
+
 
     :param data: CT scan data array in HU
     :param mat: Filtering matrix
     :param show_diff: Boolean (debug parameter) - if true result is shown
-    :param save: Boolean - if true result scan is saved
     :return: clean (without noise) data
     """
-    org_scan = data.copy()
+    org_data = data.copy()
     structuring_element = np.ones(mat)
-    data = skimage.filters.median(data, structuring_element)
-    if save:
-        morph_type = 'median_filter'
-        fig = plt.figure()
-        plt.imshow(data, aspect='auto', cmap=plt.cm.bone)
-        plt.title(f'{morph_type} mat={mat}')
 
-        plt.savefig(f'./images/{morph_type}/{morph_type}_mat{mat}.png')
+    data = skimage.util.img_as_ubyte(data)
+    data = skimage.filters.rank.mean(data, structuring_element)
+    data = data / np.max(data)
 
     if show_diff:
-        fig, ax = plt.subplots(1, 2, figsize=[8, 8])
-        ax[0].set_title('Before median filter scan')
-        ax[0].imshow(org_scan, aspect='auto', cmap=plt.cm.bone)
+        plot_difference(org_data, data, func_title="average filter")
 
-        ax[1].set_title('After median filter scan')
-        ax[1].imshow(data, aspect='auto', cmap=plt.cm.bone)
-
-        plt.show(block=True)
     return data
 
 
 def adjust_contrast(data: Any,
+                    low: float=0.15,
+                    high: float=0.65,
                     show_diff: bool = False,
-                    save: bool = False):
+                    ):
     """
+    Simple implementation of skimage function which enhances contrast in the image based on low, high value
+    Low/high values should be in range (0-1)
+    More info:
+    https://scikit-image.org/docs/stable/api/skimage.exposure.html#skimage.exposure.rescale_intensity
 
     :param data: CT scan data array in HU
+    :param low: low intensity value
+    :param high: high intensity value
     :param show_diff: Boolean (debug parameter) - if true result is shown
-    :param save: Boolean - if true result scan is saved
     :return: Image after histogram equalization
     """
-    org_scan = data.copy()
-
-    low, high = 0.15, 0.75
-    data = skimage.exposure.rescale_intensity(org_scan, in_range=(low, high))
-
-    if save:
-        fig = plt.figure()
-        plt.imshow(data, aspect='auto', cmap=plt.cm.bone)
-        plt.title(f'Contrast adjustment')
-
-        i = 1
-        while os.path.exists("threshold_%d.png" % i):
-            i += 1
-        plt.savefig(f'./images/contrast/contrast_{i}.png')
+    org_data = data.copy()
+    data = skimage.exposure.rescale_intensity(data, in_range=(low, high))
 
     if show_diff:
-        fig, ax = plt.subplots(1, 2, figsize=[8, 8])
-        ax[0].set_title('Before contrast adjustment scan')
-        ax[0].imshow(org_scan, aspect='auto', cmap=plt.cm.bone)
+        plot_difference(org_data, data, func_title="contrast adjustment")
 
-        ax[1].set_title('After contrast adjustment scan')
-        ax[1].imshow(data, aspect='auto', cmap=plt.cm.bone)
-
-        plt.show(block=True)
     return data
 
 
@@ -235,14 +192,11 @@ def clear_data(data, dil_mat=(10, 10), show_diff=False, save=False):
     :param data: CT scan data array in HU
     :param dil_mat: Dilation matrix of shape (N x N)
     :param show_diff: True/False (debug parameter) - if true result is shown
-    :param save: True/False - if true result scan is saved 
     :return: clean (without noise) data
     """
-    org_scan = data.copy()
-
-    # Set pixel values range from 0 to 100
-    data[data > 100] = 100
-    data[data < 0] = 0
+    org_data = data.copy()
+    skull = data == 1
+    data[data == 1] = 0
 
     segmentation = skimage.morphology.dilation(data, np.ones(dil_mat))
 
@@ -250,34 +204,26 @@ def clear_data(data, dil_mat=(10, 10), show_diff=False, save=False):
     label_count = np.bincount(labels.ravel().astype(int))
     label_count[0] = 0
 
-    # mask = labels == label_count.argmax()
+    mask = labels == label_count.argmax()
     # mask = skimage.morphology.dilation(mask, np.ones(dil_mat))
     # mask = sp.ndimage.morphology.binary_fill_holes(mask)
     # mask = skimage.morphology.dilation(mask, np.ones(dil_mat))
 
-    data = cv2.erode(data, np.ones(dil_mat))
-    mask = 1
+    mask = skimage.morphology.erosion(mask, np.ones((3, 3)))
+    mask = skimage.morphology.erosion(mask, np.ones((3, 3)))
+    mask = sp.ndimage.morphology.binary_fill_holes(mask)
+    mask = skimage.morphology.dilation(mask, np.ones(dil_mat))
 
-    if save:
-        morph_type = 'dilation'
-        fig = plt.figure()
-
-        plt.imshow(mask * data, aspect='auto', cmap=plt.cm.bone)
-        plt.title(f'{morph_type} mat={dil_mat}')
-
-        # plt.show(block=True)
-        plt.savefig(f'./images/{morph_type}/{morph_type}_mat{dil_mat}.png')
+    # data = cv2.erode(data, np.ones(dil_mat))
+    # data = cv2.erode(data, np.ones(dil_mat))
+    # mask = 1
+    res = (mask * data) # + skull
+    res[res == 100] = 0
 
     if show_diff:
-        fig, ax = plt.subplots(1, 2, figsize=[8, 8])
-        ax[0].set_title('Noisy scan')
-        ax[0].imshow(org_scan, aspect='auto', cmap=plt.cm.bone)
+        plot_difference(org_data, data, func_title="clear noise")
 
-        ax[1].set_title('Clean scan')
-        ax[1].imshow(mask * data, aspect='auto', cmap=plt.cm.bone)
-
-        plt.show(block=True)
-    return mask * data
+    return res
 
 
 
@@ -492,35 +438,6 @@ def uniform_depth(data: np.ndarray,
     if type_ == 'single':
         return np.array(ct_scans[0])
     return np.array(ct_scans)
-
-
-def plot_ct_images(data: Any,
-                   rows: int=6,
-                   cols: int=6,
-                   start_with: int=10,
-                   show_every: int=3,
-                   block: bool=True,
-                   ):
-    """
-    Using matplotlib plots scans side by side
-
-    :param data: list of scans
-    :param rows: number of rows
-    :param cols: number of columns
-    :param start_with: initial scan to start with
-    :param show_every: number of steps
-    :param block:
-    """
-    fig, ax = plt.subplots(rows, cols, figsize=[8, 8])
-    index = start_with
-    for i in range(rows):
-        for j in range(cols):
-            ax[i, j].set_title(f'Scan slice {index}')
-            ax[i, j].imshow(data[index], aspect='auto', cmap=plt.cm.bone)
-            ax[i, j].axis('off')
-            index += show_every
-    plt.show(block=block)
-
 
 def load_data(path,
               limit: int=1000,
