@@ -1,0 +1,43 @@
+Used techniques:
+
+| Type	|	Functions													|
+|-------|---------------------------------------------------------------|
+|		| uniform_depth(numpy_array, center_pos=3/5, type_='single')	|
+|		| clear_data(scan_raw, dil_mat=(20, 20), show_diff=False)		|
+|	02	| move_to_center(scan, 512, 512, show_diff=False)				|
+|		| resize_scan(scan, 256, 256, show_diff=False)					|
+|		| filter_data(scan, show_dif=False)								|
+|		| move_to_center(scan, 128, 128, show_diff=False)				|
+|-------|---------------------------------------------------------------|
+|-------|---------------------------------------------------------------|
+|		| uniform_depth(numpy_array, center_pos=1/2, type_='single'))	|
+|		| clear_data(scan_raw, dil_mat=(20, 20), show_diff=False)		|
+|	03	| rotate_to_center(scan, show_diff=False)						|
+|		| move_to_center(scan, 512, 512, show_diff=False)				|
+|		| resize_scan(scan, 256, 256, show_diff=False)					|
+|		| filter_data(scan, show_dif=False)								|
+|		| move_to_center(scan, 128, 128, show_diff=False)				|
+|-------|---------------------------------------------------------------|
+|-------|---------------------------------------------------------------|
+|		| uniform_depth(numpy_array, center_pos=3/5, type_='single')	|
+|		| clear_data(scan_raw, dil_mat=(20, 20), show_diff=False)		|
+|	04	| resize_scan(scan, 256, 256, show_diff=False)					|
+|		| filter_data(scan, show_dif=False)								|
+|		| resize_scan(scan, 128, 128, show_diff=False)					|
+|-------|---------------------------------------------------------------|
+|-------|---------------------------------------------------------------|
+|		| uniform_depth(numpy_array, center_pos=3/5, type_='single')	|
+|		| thresholding(scan, show_diff=False)							|
+|	05	| mean_filter(scan, mat=(3, 3), show_diff=False)				|
+|		| adjust_contrast(scan, low=0.15, high=0.65, show_diff=False)	|
+|		| clear_data(scan, dil_mat=(3, 3), show_diff=False)				|
+|		| move_to_center(scan, out_height=256, out_width=256)			|
+|		| resize_scan(scan, 256, 256, show_diff=False)					|
+|-------|---------------------------------------------------------------|
+|-------|---------------------------------------------------------------|
+|		| uniform_depth(numpy_array, center_pos=3/5, type_='single')	|
+|		| thresholding(scan, show_diff=False)							|
+|	06	| resize_scan(scan, 256, 256, show_diff=False)					|
+|		| 																|
+|-------|---------------------------------------------------------------|
+|-------|---------------------------------------------------------------|
