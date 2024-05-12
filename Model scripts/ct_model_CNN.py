@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 pos_dir = 'D:/CT-Dataset/positive'
 neg_dir = 'D:/CT-Dataset/negative'
 
+pos_dir = "C:/Users/vikis/Desktop/data/pos"
+neg_dir = "C:/Users/vikis/Desktop/data/neg"
 processed_type = str(input('Type: ', ))
 
 data_pos = load_data(pos_dir,
